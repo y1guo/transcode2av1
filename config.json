@@ -1,11 +1,6 @@
 {
-  "in_dir_list": ["/mnt/f/lulu/Transcoded_MP4"],
+  "in_dirs": ["/mnt/e/uncategorized"],
   "out_dir": "/mnt/d/transcode_av1",
-  "low_quality_roomids": [
-    "12962",
-    "4910271",
-    "21263282",
-    "22259479",
-    "25206807"
-  ]
+  "roomids": ["12962", "4910271", "21263282", "22259479", "25206807"],
+  "constant_quality": 51
 }
