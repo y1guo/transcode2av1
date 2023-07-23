@@ -1,5 +1,5 @@
 {
-  "in_dirs": ["/mnt/e/uncategorized"],
+  "in_dirs": ["/mnt/e/BiliRec_apixC/uncategorized"],
   "out_dir": "/mnt/d/transcode_av1",
   "roomids": ["12962", "4910271", "21263282", "22259479", "25206807"],
   "constant_quality": 51
