@@ -1,12 +1,12 @@
 import os, ffmpeg, json, time, datetime
-from multiprocessing import Pool
+from multiprocessing import Process
 from colorama import Fore, Style
 
 
 # load config
 with open("config.json") as f:
     config = json.load(f)
-    IN_DIRS = config["in_dirs"]
+    IN_DIR = config["in_dir"]
     OUT_DIR = config["out_dir"]
     ROOMIDS = config["roomids"]
     CONSTANT_QUALITY = config["constant_quality"]
@@ -67,10 +67,14 @@ def transcode(in_file: str, out_file: str):
         msg(f"{Fore.YELLOW}Removed {out_file}{Style.RESET_ALL}")
 
 
-# loop over all files in the directory list
-args = []
-for dir in IN_DIRS:
+def traverse(dir: str, args: list):
+    out_dir = dir.replace(IN_DIR, OUT_DIR)
     for file in os.listdir(dir):
+        if os.path.isdir(os.path.join(dir, file)):
+            if not os.path.exists(os.path.join(out_dir, file)):
+                os.mkdir(os.path.join(out_dir, file))
+            traverse(os.path.join(dir, file), args)
+            continue
         base_name, ext = os.path.splitext(file)
         if ext in [".flv", ".mp4", ".m4v"]:
             # filter by roomid
@@ -80,13 +84,34 @@ for dir in IN_DIRS:
             # get the full path of the file
             in_file = os.path.join(dir, file)
             # create the output file name
-            out_file = os.path.join(OUT_DIR, base_name + ".mp4")
+            out_file = os.path.join(out_dir, base_name + ".mp4")
             # add to the list of arguments
             args.append((in_file, out_file))
+
+
+# loop over all files in the directory list
+args = []
+traverse(IN_DIR, args)
 
 # sort by file name in ascending order
 args.sort(key=lambda x: x[0])
 
 # transcode in parallel
-with Pool(4) as pool:
-    pool.starmap(transcode, args)
+num_proc = 4
+procs = []
+while args:
+    if len(procs) < num_proc:
+        proc = Process(target=transcode, args=args.pop(0))
+        proc.start()
+        procs.append(proc)
+    else:
+        for i in range(len(procs)):
+            if not procs[i].is_alive():
+                procs[i].join()
+                proc = Process(target=transcode, args=args.pop(0))
+                proc.start()
+                procs[i] = proc
+                break
+for proc in procs:
+    proc.join()
+msg("Done")
